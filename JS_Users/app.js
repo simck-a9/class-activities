@@ -2,10 +2,14 @@
 // Generate the GET, POST, PUT, DELETE routes for /users without use of Mongodb database
 
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json()); // Middleware to parse JSON requests
+
+// CORS middleware: Allow requests from any origin (customize as needed)
+app.use(cors());
 
 // In-memory array to store user data
 let users = [];
@@ -21,15 +25,29 @@ app.get('/users', (req, res) => {
   res.status(200).json(users);
 });
 
-// POST route to create a new user
-app.post('/users', (req, res) => {
+// Simple token-based authentication middleware
+function authenticateToken(req, res, next) {
+  // For demonstration, expect token in 'Authorization' header as 'Bearer <token>'
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  // Replace 'mysecrettoken' with your actual secret/token logic
+  if (token === 'mysecrettoken') {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
+  }
+}
+
+// Protect sensitive endpoints with authentication middleware
+app.post('/users', authenticateToken, (req, res) => {
   const newUser = { id: userIdCounter++, ...req.body }; // Assign a unique ID using the counter
   users.push(newUser);
   res.status(201).json(newUser);
 });
 
 // PUT route to update a user by ID
-app.put('/users/:id', (req, res) => {
+app.put('/users/:id', authenticateToken, (req, res) => {
   const userId = parseInt(req.params.id);
   const userIndex = users.findIndex(user => user.id === userId);
 
@@ -42,7 +60,7 @@ app.put('/users/:id', (req, res) => {
 });
 
 // DELETE route to delete a user by ID
-app.delete('/users/:id', (req, res) => {
+app.delete('/users/:id', authenticateToken, (req, res) => {
   const userId = parseInt(req.params.id);
   const userIndex = users.findIndex(user => user.id === userId);
 
