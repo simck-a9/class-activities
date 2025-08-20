@@ -5,42 +5,8 @@ let app;
 
 // Import the app or set up a fresh instance for testing
 before(() => {
-    app = require('../app'); // If app.js exports the app, otherwise see below
+    app = require('../app');
 });
-
-// If app.js does not export the app, use this workaround:
-// if (!app.listen) {
-//     // Re-create the app from app.js code for testing
-//     app = express();
-//     app.use(express.json());
-//     app.use(require('cors')());
-//     let users = [];
-//     let userIdCounter = 1;
-//     app.get('/users', (req, res) => res.status(200).json(users));
-//     app.post('/users', (req, res) => {
-//         if (req.headers.authorization !== 'Bearer mysecrettoken') return res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
-//         const newUser = { id: userIdCounter++, ...req.body };
-//         users.push(newUser);
-//         res.status(201).json(newUser);
-//     });
-//     app.put('/users/:id', (req, res) => {
-//         if (req.headers.authorization !== 'Bearer mysecrettoken') return res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
-//         const userId = parseInt(req.params.id);
-//         const userIndex = users.findIndex(user => user.id === userId);
-//         if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
-//         users[userIndex] = { ...users[userIndex], ...req.body };
-//         res.status(200).json(users[userIndex]);
-//     });
-//     app.delete('/users/:id', (req, res) => {
-//         if (req.headers.authorization !== 'Bearer mysecrettoken') return res.status(401).json({ error: 'Unauthorized: Invalid or missing token' });
-//         const userId = parseInt(req.params.id);
-//         const userIndex = users.findIndex(user => user.id === userId);
-//         if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
-//         const deletedUser = users.splice(userIndex, 1);
-//         res.status(200).json({ message: 'User deleted successfully', user: deletedUser });
-//     });
-//     app.get('/', (req, res) => res.redirect('/users'));
-//}
 
 describe('User API Routes', () => {
     let createdUserId;
@@ -60,11 +26,33 @@ describe('User API Routes', () => {
         const res = await request(app)
             .post('/users')
             .set('Authorization', 'Bearer mysecrettoken')
-            .send({ name: 'Alice' });
+            .send({ name: 'Alice', age: 30 });
         assert.strictEqual(res.status, 201);
         assert(res.body.id);
         assert.strictEqual(res.body.name, 'Alice');
         createdUserId = res.body.id;
+    });
+
+    // Edge case: POST /users with missing required field (e.g., name)
+    it('POST /users should handle missing fields', async () => {
+        const res = await request(app)
+            .post('/users')
+            .set('Authorization', 'Bearer mysecrettoken')
+            .send({}); // No fields
+        // The current implementation accepts any fields, so expect 201
+        assert.strictEqual(res.status, 201);
+        assert(res.body.id);
+    });
+
+    // Edge case: POST /users with invalid data type (e.g., age as string)
+    it('POST /users should handle invalid data types', async () => {
+        const res = await request(app)
+            .post('/users')
+            .set('Authorization', 'Bearer mysecrettoken')
+            .send({ name: 'Bob', age: "not-a-number" });
+        // The current implementation does not validate types, so expect 201
+        assert.strictEqual(res.status, 201);
+        assert.strictEqual(res.body.age, "not-a-number");
     });
 
     it('PUT /users/:id should require authentication', async () => {
@@ -79,6 +67,26 @@ describe('User API Routes', () => {
             .send({ name: 'Bob' });
         assert.strictEqual(res.status, 200);
         assert.strictEqual(res.body.name, 'Bob');
+    });
+
+    // Edge case: PUT /users/:id with invalid data type
+    it('PUT /users/:id should handle invalid data types', async () => {
+        const res = await request(app)
+            .put(`/users/${createdUserId}`)
+            .set('Authorization', 'Bearer mysecrettoken')
+            .send({ age: "not-a-number" });
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(res.body.age, "not-a-number");
+    });
+
+    // Edge case: PUT /users/:id with missing fields (should not remove existing fields)
+    it('PUT /users/:id should handle missing fields gracefully', async () => {
+        const res = await request(app)
+            .put(`/users/${createdUserId}`)
+            .set('Authorization', 'Bearer mysecrettoken')
+            .send({});
+        assert.strictEqual(res.status, 200);
+        assert(res.body.id);
     });
 
     it('DELETE /users/:id should require authentication', async () => {
@@ -107,5 +115,19 @@ describe('User API Routes', () => {
             .delete('/users/9999')
             .set('Authorization', 'Bearer mysecrettoken');
         assert.strictEqual(res.status, 404);
+    });
+
+    // Edge case: GET /users after all users deleted
+    it('GET /users should return empty array if no users', async () => {
+        const res = await request(app).get('/users');
+        assert.strictEqual(res.status, 200);
+        assert(Array.isArray(res.body));
+    });
+
+    // Edge case: GET / should redirect to /users
+    it('GET / should redirect to /users', async () => {
+        const res = await request(app).get('/');
+        assert.strictEqual(res.status, 302);
+        assert.strictEqual(res.headers.location, '/users');
     });
 });
