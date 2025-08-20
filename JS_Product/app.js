@@ -56,7 +56,18 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/product', requireLogin, (req, res) => {
-  res.render('product', { title: 'Product' });
+  // Example: Read images from public/images and send as products
+  const fs = require('fs');
+  const imagesDir = path.join(__dirname, 'public', 'images');
+  let products = [];
+  try {
+    const files = fs.readdirSync(imagesDir);
+    products = files.filter(f => /\.(jpg|jpeg|png|gif|webp)$/i.test(f)).map(f => ({
+      image: f,
+      caption: f.split('.').slice(0, -1).join('.').replace(/[_-]/g, ' ')
+    }));
+  } catch (e) {}
+  res.render('product', { title: 'Product', products });
 });
 
 app.get('/add-product', requireLogin, (req, res) => {

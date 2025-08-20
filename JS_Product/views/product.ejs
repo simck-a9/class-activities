@@ -2,5 +2,22 @@
 <%- include('navbar', { route: 'product' }) %>
 <div class="container mt-4">
   <h2>Product List</h2>
-  <div class="alert alert-info">No products to display.</div>
+  <% if (products && products.length > 0) { %>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <tbody>
+          <tr>
+            <% products.forEach(function(product) { %>
+              <td class="text-center" style="min-width:180px;">
+                <img src="/images/<%= product.image %>" class="img-fluid rounded mb-2" style="max-height:150px;" alt="<%= product.caption %>">
+                <div class="fw-semibold"><%= product.caption %></div>
+              </td>
+            <% }); %>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <div class="alert alert-info">No products to display.</div>
+  <% } %>
 </div>
