@@ -1,0 +1,18 @@
+<% layout('layout') %>
+<%- include('navbar', { route: 'add-product' }) %>
+<div class="container mt-4">
+  <h2>Add Product</h2>
+  <form>
+    <div class="mb-3">
+      <label>Product Name</label>
+      <input class="form-control" type="text" placeholder="Enter product name" disabled>
+    </div>
+    <div class="mb-3">
+      <label>Price</label>
+      <input class="form-control" type="number" placeholder="Enter price" disabled>
+    </div>
+    <button class="btn btn-success" type="submit" disabled>
+      Add (demo only)
+    </button>
+  </form>
+</div>

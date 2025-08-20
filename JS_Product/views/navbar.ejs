@@ -1,0 +1,21 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid">
+    <span class="navbar-brand">ProductApp</span>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link <%= route === 'product' ? 'active' : '' %>" href="/product">Product</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link <%= route === 'add-product' ? 'active' : '' %>" href="/add-product">Add-Product</a>
+        </li>
+      </ul>
+      <form method="POST" action="/logout" class="d-flex mb-0">
+        <button class="btn btn-outline-light" type="submit">Logout</button>
+      </form>
+    </div>
+  </div>
+</nav>
