@@ -73,10 +73,13 @@ app.delete('/users/:id', authenticateToken, (req, res) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') { // Only listen if not in test environment
 
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
 
+module.exports = app;
 
 
